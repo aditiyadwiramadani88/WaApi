@@ -73,7 +73,7 @@ const loginUser = async (req, res) => {
         return res.status(400).json({ error: "Email is not registered" });
     }
     if (hashPassword(password) === user.password) {
-        const token = jwt.sign({ id: user.id, email: user.email }, 'hhhh');
+        const token = jwt.sign({ id: user.id, email: user.email, role: user.role }, process.env.JWT_SECRET);
         return res.json({ token });
     }
     return res.status(400).json({ error: 'Invalid password' });
