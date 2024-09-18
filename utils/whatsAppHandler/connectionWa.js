@@ -1,7 +1,6 @@
 const {
     DisconnectReason,
     useMultiFileAuthState,
-    downloadMediaMessage,
 } = require("@whiskeysockets/baileys");
 const makeWASocket = require("@whiskeysockets/baileys").default;
 const { Boom } = require("@hapi/boom");
@@ -14,7 +13,7 @@ const Qrcode = [];
 
 class HandleWhastApp {
     constructor(deviceId) {
-        const result = dataDevices.find(item => item.deviceId === deviceId);
+        const result = dataDevices.find(item => item.deviceId == deviceId);
         this.sock = result?.sock;
         this.pathSession = String(`${__dirname}/session/device-${deviceId}`).replace('utils/whatsAppHandler', '')
         this.deviceId = deviceId
@@ -27,7 +26,6 @@ class HandleWhastApp {
             auth: state,
             qrTimeout: 60000,
         });
-
         this.sock = sock
         this.sock.ev.on("creds.update", saveCreds);
         this.sock.ev.on("connection.update", this.handleConnectionUpdate.bind(this));
@@ -64,7 +62,8 @@ class HandleWhastApp {
             } else {
                 const indexById = dataDevices.findIndex(deviceData => deviceData?.deviceId == this.deviceId);
                 await fs.rm(this.pathSession, { recursive: true, force: true })
-                delete dataDevices[indexById]
+                dataDevices.splice(indexById, 1)
+
             }
 
         } else if (connection === "open") {
@@ -72,7 +71,7 @@ class HandleWhastApp {
             const user = this.sock.user.id;
             const phoneNumber = this.getNumberPhone(user)
             const indexById = Qrcode.findIndex(qrData => qrData?.deviceId == this.deviceId);
-            delete Qrcode[indexById]
+             Qrcode.splice(indexById, 1)
             await Device.update({ status: 1, phone: phoneNumber }, {
                 where: {
                     id: this.deviceId
@@ -83,7 +82,6 @@ class HandleWhastApp {
 
     async handleMessageUpsert({ messages }) {
         const m = messages[0]
-        logger.info("Receive message with reply " + JSON.stringify(m))
         const key = m.key
         let remoteJid = key.remoteJid;
         let txt = m
@@ -136,29 +134,27 @@ class HandleWhastApp {
     }
 
     async message({ text, phone }) {
-        await this.sock.sendMessage(phone, { text })
+        await this.sock.sendMessage(`${phone}@s.whatsapp.net`, { text })
         return true;
     }
 
 
     async media({ caption, url, phone, mime }) {
 
-        const mentions = [...caption.matchAll(/@(\d{0,16})/g)].map((v) => v[1] + "@s.whatsapp.net");
-
         if (mime == "Image") {
-            await this.sock.sendMessage(phone, { image: { url }, caption: caption }, { quoted: "" })
+            await this.sock.sendMessage(`${phone}@s.whatsapp.net`, { image: { url }, caption: caption }, { quoted: "" })
         }
         if (mime == "Audio") {
-            await this.sock.sendMessage(phone, { audio: { url }, caption: caption }, { quoted: "" })
+            await this.sock.sendMessage(`${phone}@s.whatsapp.net`, { audio: { url }, caption: caption }, { quoted: "" })
         }
         if (mime == "Video") {
-            await this.sock.sendMessage(phone, { video: { url }, caption: caption }, { quoted: "" })
+            await this.sock.sendMessage(`${phone}@s.whatsapp.net`, { video: { url }, caption: caption }, { quoted: "" })
         }
         if (mime == "Document") {
             const buffer = await axios.get(url, { responseType: 'arraybuffer' });
             const name = url.split('/').pop();
             const type = buffer.headers['content-type'];
-            await this.sock.sendMessage(phone, {
+            await this.sock.sendMessage(`${phone}@s.whatsapp.net`, {
                 document: buffer.data,
                 fileName: name,
                 mimetype: type,
