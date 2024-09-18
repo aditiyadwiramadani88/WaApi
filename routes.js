@@ -22,8 +22,8 @@ router.delete('/api/device/:id', authMiddleware, deleteDevice);
 router.post('/api/qr/:id', authMiddleware, scanQrCode);
 router.get('/api/qr/:id', authMiddleware, getQrCode);
 
-router.post('/api/message', authAdminMiddleware, sendMessage)
-router.post('/api/media', authAdminMiddleware, sendMessageMedia)
+router.post('/api/message/:id', authMiddleware, sendMessage)
+router.post('/api/media/:id', authMiddleware, sendMessageMedia)
 
 
 module.exports = router;
