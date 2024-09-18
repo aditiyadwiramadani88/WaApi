@@ -15,7 +15,7 @@ const createDevice = async (req, res) => {
     const { error } = deviceValidated.validate({ name, webhookUrl })
     if (error) {
         return res.status(400).json({ "error": error.details[0].message })
-    }   
+    }
     const { dataValues } = await User.findByPk(req.user.id)
     const deviceByUser = await Device.findAll({ where: { userId: req.user.id } })
 
@@ -81,7 +81,7 @@ const scanQrCode = async (req, res) => {
     if (findDevice.status) {
         return res.status(400).json({ error: "Device is connected" })
     }
-    const handler = new HandleWhastApp(req.params.device)
+    const handler = new HandleWhastApp(req.params.id)
     await handler.connect()
     return res.json({ message: 'Sucess scan to devices' })
 }
@@ -94,7 +94,11 @@ const getQrCode = async (req, res) => {
     if (findDevice.status) {
         return res.status(400).json({ error: "Device is connected" })
     }
-    const result = Qrcode.find(item => item.deviceId === findDevice.id);
+    const result = Qrcode.find(item => item.deviceId === req.params.id);
+    if (!result) {
+        return res.status(400).json({ 'error': 'Scan Device to get qr Code' })
+
+    }
     return res.json({ 'message': 'Success Get Qr', 'data': result?.qr })
 }
 
